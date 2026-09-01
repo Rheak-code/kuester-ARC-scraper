@@ -42,7 +42,7 @@ type, and status.
 
 **2. Pull full details for one request:**
 ```bash
-node fetch-arc-requests.js --homeowner "Vyom Chadha"
+node fetch-arc-requests.js --homeowner "Jane Doe"
 # or
 node fetch-arc-requests.js --row 1
 ```
