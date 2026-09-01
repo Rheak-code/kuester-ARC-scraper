@@ -1,0 +1,13 @@
+{
+  "name": "kuester-arc-scraper",
+  "version": "1.0.0",
+  "description": "Logs into the Kuester Management portal, pulls open ARC requests, downloads attached documents, and saves committee notes for use with the arc-review-assistant Claude skill.",
+  "type": "module",
+  "scripts": {
+    "list": "node fetch-arc-requests.js --list",
+    "fetch": "node fetch-arc-requests.js"
+  },
+  "dependencies": {
+    "playwright": "^1.47.0"
+  }
+}
