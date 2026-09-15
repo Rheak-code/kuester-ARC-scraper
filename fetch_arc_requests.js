@@ -90,7 +90,7 @@ async function goToArcReview(page) {
   await page.waitForSelector('#StartDate:not([disabled])');
 
 // Dates
-  await page.fill('#StartDate', '2026-07-15');   // ← your fixed start date, YYYY-MM-DD
+  await page.fill('#StartDate', '2026-08-01');   // ← your fixed start date, YYYY-MM-DD
   await page.fill('#EndDate', new Date().toISOString().split('T')[0]);  // today
 
   const refreshBtn = page.getByRole('button', { name: 'Refresh' });

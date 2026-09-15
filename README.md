@@ -35,7 +35,7 @@ inline in a command you'll re-run from shell history.
 
 **1. See what's open:**
 ```bash
-node fetch-arc-requests.js --list
+node fetch_arc_requests.js --list
 ```
 Prints every open/pending request with its row index, homeowner, address,
 type, and status.
@@ -44,7 +44,7 @@ type, and status.
 ```bash
 node fetch-arc-requests.js --homeowner "Jane Doe"
 # or
-node fetch-arc-requests.js --row 1
+node fetch_arc_requests.js --row 1
 ```
 
 This will:
