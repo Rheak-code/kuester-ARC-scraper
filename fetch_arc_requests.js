@@ -90,7 +90,7 @@ async function goToArcReview(page) {
   await page.waitForSelector('#StartDate:not([disabled])');
 
 // Dates
-  await page.fill('#StartDate', '2026-08-01');   // ← your fixed start date, YYYY-MM-DD
+  await page.fill('#StartDate', '2026-09-20');   // ← your fixed start date, YYYY-MM-DD
   await page.fill('#EndDate', new Date().toISOString().split('T')[0]);  // today
 
   const refreshBtn = page.getByRole('button', { name: 'Refresh' });
@@ -191,6 +191,21 @@ async function extractNotes(page) {
   }
   return notes;
 }
+// Returns a filename that doesn't collide with one already used in this folder:
+// "photo.jpg" -> "photo (2).jpg" -> "photo (3).jpg" ...
+function uniqueFilename(destDir, filename, used) {
+  const ext = path.extname(filename);
+  const base = path.basename(filename, ext);
+  let candidate = filename;
+  let n = 2;
+  while (used.has(candidate.toLowerCase()) || fs.existsSync(path.join(destDir, candidate))) {
+    candidate = `${base} (${n})${ext}`;
+    n++;
+  }
+  used.add(candidate.toLowerCase());
+  return candidate;
+}
+
 async function downloadAttachments(page, destDir) {
   fs.mkdirSync(destDir, { recursive: true });
 
@@ -212,36 +227,36 @@ async function downloadAttachments(page, destDir) {
   console.log(`  ${ids.length} unique attachment(s)`);
 
   const context = page.context();
-  const savedFiles = [];
+  const kept = [];
+  const usedNames = new Set();
 
-  // Download each attachment by invoking the site's own function.
   for (const id of ids) {
     try {
       const downloadPromise = context.waitForEvent('download', { timeout: 10000 });
       await page.evaluate((attId) => downloadBoardACCAttachment(Number(attId)), id);
       const download = await downloadPromise;
-      const filename = download.suggestedFilename() || `attachment-${id}.pdf`;
+      const suggested = (download.suggestedFilename() || `attachment-${id}.pdf`).trim();
+
+      // Skip Letter_* files up front — never written, so nothing to delete later.
+      if (/^letter/i.test(suggested)) {
+        await download.cancel().catch(() => {});
+        console.log(`  – Skipped "${suggested}" (Letter file)`);
+        continue;
+      }
+
+      // Avoid overwriting when two attachments share a name.
+      const filename = uniqueFilename(destDir, suggested, usedNames);
       await download.saveAs(path.join(destDir, filename));
-      savedFiles.push(filename);
-      console.log(`  ✓ ${filename}`);
+      kept.push(filename);
+      console.log(`  ✓ ${filename}${filename !== suggested ? ` (renamed from "${suggested}")` : ''}`);
     } catch (err) {
       console.warn(`  ! ID ${id} produced no download (${err.message})`);
     }
   }
 
-  // Filter out Letter_* files by their real saved filename.
-  const kept = [];
-  for (const f of savedFiles) {
-    if (/^letter/i.test(f.trim())) {
-      fs.unlinkSync(path.join(destDir, f));
-      console.log(`  – Deleted "${f}" (Letter file)`);
-    } else {
-      kept.push(f);
-    }
-  }
-
   return kept;
 }
+
 /*writes notes.md */
 function writeNotesMarkdown(destDir, fields, notes, attachmentFiles) {
   let md = `# ARC Request — ${fields['Homeowner'] || 'Unknown'}\n\n`;
